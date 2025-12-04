@@ -1,0 +1,41 @@
+name: Generate Neon Snake and Commit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */12 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Generate Neon Snake SVGs
+        uses: Platane/snk@v3
+        with:
+          github_user_name: SidduKutchula    # <-- keep your username
+          palette: "neon"
+          outputs: |
+            dist/neon-snake.svg
+            dist/neon-snake-dark.svg
+
+      - name: Move generated files to output/
+        run: |
+          mkdir -p output
+          mv -f dist/*.svg output/ || true
+
+      - name: Commit and push generated SVGs (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add output/*.svg || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: generate neon snake svgs"
+            git push
+          fi
